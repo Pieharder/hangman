@@ -1,93 +1,86 @@
-import React, { Component } from 'react';
-import { randomWord } from './WordList.js';
+import React from 'react';
 import { Button, Container } from 'react-bootstrap';
+import { images } from './HangmanImages';
 import LetterList from './LetterList.js';
-import step0 from '../img/0.png';
-import step1 from '../img/1.png';
-import step2 from '../img/2.png';
-import step3 from '../img/3.png';
-import step4 from '../img/4.png';
-import step5 from '../img/5.png';
-import step6 from '../img/6.png';
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import * as a from './../actions';
 
-class Hangman extends Component {
-
-  static defaultProps = {
-    maxWrongGuesses: 6,
-    images: [step0, step1, step2, step3, step4, step5, step6]
-  };
-
+class Hangman extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      mistake: 0,
-      guessed: new Set([]),
-      answer: randomWord()
+      correctGuesses: 0
+    }
+  }
+  
+  guessedWord(){
+    return this.props.answer.split("").map(letter => (this.props.guessed.has(letter) ? letter : " _ "));
+  };
+
+  handleGuess = (letter) => {
+    const { dispatch } = this.props;
+    const actionOne = a.addGuess(letter);
+    dispatch(actionOne);
+    const actionTwo = this.props.answer.includes(letter) ? a.addMistake(0) : a.addMistake(1);
+    dispatch(actionTwo);
+    if (this.props.answer.includes(letter)) {
+      const updatedCount = this.state.correctGuesses + 1;
+      this.setState({correctGuesses: updatedCount});
     }
   };
 
-  guessedWord(){
-    // display either letter if the letter was guessed, or display underscore.
-    return this.state.answer.split("").map(letter => (this.state.guessed.has(letter) ? letter : " _ "));
-  }
-
-  handleGuess = (value) => {
-    let letter = value;
-    this.setState(state => ({
-      guessed: state.guessed.add(letter),
-      mistake: state.mistake + (state.answer.includes(letter) ? 0 : 1)
-    }));
-  }
-
   resetGame = () => {
-    this.setState({
-      mistake: 0,
-      guessed: new Set([]),
-      answer: randomWord()
-    });
+    const { dispatch } = this.props;
+    const action = a.resetMistakes();
+    dispatch(action);
+    const actionTwo = a.resetGuesses();
+    dispatch(actionTwo);
+    const actionThree = a.setAnswer();
+    dispatch(actionThree);
   }
 
-  render() {
-    const hangmanStyles = {
-      marginTop: '2%',
-      display: 'flex',
-      justifyContent: 'space-around',
-      alignItems: 'center'
-    }
+  render(){
+    const isWinner = this.guessedWord().join("") === this.props.answer;
 
-    const gameOver = this.state.mistake >= this.props.maxWrongGuesses;
-    const isWinner = this.guessedWord().join("") === this.state.answer;
+    const gameOverLost = this.props.mistake >= 6;
+
+    const gameOver = isWinner || gameOverLost;
+
     let gameStatus;
     if (isWinner) {
-      gameStatus = "You won!"
+      gameStatus = "You won!";
     }
-    if (gameOver) {
-      gameStatus = "You lose!"
+    if (gameOverLost) {
+      gameStatus = "You lost!";
     }
 
     const imgStyles = {
       height: '75vh',
       width: 'auto'
-    }
-
+    };
     const winStyles = {
       color: '#17a2b8',
       fontSize: '3em'
-    }
+    };
+    const hangmanStyles = {
+      marginTop: '2%',
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center'
+    };
 
     return (
       <React.Fragment>
         <Container style={hangmanStyles}>
           <div>
-            <img style={imgStyles} src={this.props.images[this.state.mistake]} alt="current state of hangman"></img>
+            <img style={imgStyles} src={images[this.props.mistake]} alt="current state of hangman"></img>
           </div>
           <div>
-            <p>incorrect guesses: {this.state.mistake} of {this.props.maxWrongGuesses}</p>
+            <p>incorrect guesses: {this.props.mistake} of 6</p>
             <p>Guess the word:</p>
-            <p>
-              {!gameOver ? this.guessedWord() : this.state.answer}
-            </p>
-            <LetterList onLetterClick={this.handleGuess} />
+            <p>{!gameOver ? this.guessedWord() : this.props.answer}</p>
+            {!gameOver ? <LetterList onLetterClick={this.handleGuess} /> : <p>GAME OVER</p>}
             <p style={winStyles}>{gameStatus}</p>
             <Button variant="outline-info" onClick={this.resetGame}>Restart game</Button>
           </div>
@@ -96,5 +89,21 @@ class Hangman extends Component {
     );
   }
 }
+
+Hangman.propTypes = {
+  guessed: PropTypes.object,
+  mistake: PropTypes.number,
+  answer: PropTypes.string
+};
+
+const mapStateToProps = (state) => {
+  return {
+    guessed: state.guessed,
+    mistake: state.mistake,
+    answer: state.answer
+  }
+};
+
+Hangman = connect(mapStateToProps)(Hangman);
 
 export default Hangman;

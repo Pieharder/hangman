@@ -1,10 +1,12 @@
 import { randomWord } from '../components/WordList';
+import * as c from './../actions/ActionTypes';
 
-export default (state = null, action) => {
+export default (state = "haru", action) => {
   switch (action.type) {
-    case 'SET_ANSWER':
+    case c.SET_ANSWER:
       const currentAnswer = randomWord();
       return currentAnswer;
+    default:
+      return state;
   }
-  return state;
 };

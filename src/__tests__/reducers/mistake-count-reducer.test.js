@@ -1,4 +1,5 @@
 import mistakeCountReducer from '../../reducers/mistake-counter-reducer';
+import * as c from '../../actions/ActionTypes';
 
 describe('mistakeCountReducer', ()=> {
 
@@ -8,9 +9,16 @@ describe('mistakeCountReducer', ()=> {
 
   test('should add 1 to mistake counter', () => {
     const action = {
-      type: 'ADD_MISTAKE'
+      type: c.ADD_MISTAKE,
+      value: 1
     };
     expect(mistakeCountReducer(0, action)).toEqual(1);
   });
 
+  test('should reset mistake count to 0', () => {
+    const action = {
+      type: c.RESET_MISTAKES
+    };
+    expect(mistakeCountReducer(4, action)).toEqual(0);
+  });
 });
